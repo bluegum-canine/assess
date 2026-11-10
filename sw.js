@@ -1,9 +1,9 @@
-// Offline cache: serve from cache straight away, refresh in the background.
-const CACHE = 'assess-v3';
+// Offline cache. Online: always fetch the latest (3s limit). No signal: serve the saved copy.
+const CACHE = 'assess-v5';
 const ASSETS = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS.map(u => new Request(u, { cache: 'reload' })))));
   self.skipWaiting();
 });
 self.addEventListener('activate', e => {
@@ -14,9 +14,13 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
   e.respondWith(caches.open(CACHE).then(async c => {
-    const hit = await c.match(e.request, { ignoreSearch: true });
-    const fresh = fetch(e.request).then(r => { if (r.ok) c.put(e.request, r.clone()); return r; });
-    if (hit) { fresh.catch(() => {}); return hit; }
-    return fresh.catch(() => c.match('index.html'));
+    const saved = () => c.match(e.request, { ignoreSearch: true }).then(r => r || c.match('index.html'));
+    try {
+      const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 3000);
+      const r = await fetch(e.request.url, { cache: 'no-cache', signal: ctl.signal });
+      clearTimeout(timer);
+      if (r.ok) { c.put(e.request, r.clone()); return r; }
+      return (await saved()) || r;
+    } catch (err) { return saved(); }
   }));
 });
