@@ -1,6 +1,6 @@
 // Offline cache. Online: always fetch the latest (3s limit). No signal: serve the saved copy.
-const CACHE = 'assess-v6';
-const ASSETS = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-512.png', 'logo.svg'];
+const CACHE = 'assess-v7';
+const ASSETS = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-512.png', 'seal.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS.map(u => new Request(u, { cache: 'reload' })))));
