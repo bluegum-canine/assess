@@ -1,5 +1,5 @@
 // Offline cache. Online: always fetch the latest (3s limit). No signal: serve the saved copy.
-const CACHE = 'assess-v8';
+const CACHE = 'assess-v9';
 const ASSETS = ['./', 'index.html', 'manifest.webmanifest', 'icon-180.png', 'icon-512.png', 'seal.png'];
 
 self.addEventListener('install', e => {
